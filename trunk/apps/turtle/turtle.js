@@ -66,64 +66,75 @@ Turtle.init = function() {
       {path: '../../',
        rtl: rtl,
        toolbox: toolbox,
-       trashcan: true});
+       trashcan: true}, function(){
+          Blockly.JavaScript.INFINITE_LOOP_TRAP = '  BlocklyApps.checkTimeout(%1);\n';
 
-  Blockly.JavaScript.INFINITE_LOOP_TRAP = '  BlocklyApps.checkTimeout(%1);\n';
+            // Add to reserved word list: API, local variables in execution evironment
+            // (execute) and the infinite loop detection function.
+            Blockly.JavaScript.addReservedWords('Turtle,code');
 
-  // Add to reserved word list: API, local variables in execution evironment
-  // (execute) and the infinite loop detection function.
-  Blockly.JavaScript.addReservedWords('Turtle,code');
+            window.addEventListener('beforeunload', function(e) {
+              if (Blockly.mainWorkspace.getAllBlocks().length > 2) {
+                e.returnValue = BlocklyApps.getMsg('unloadWarning');  // Gecko.
+                return BlocklyApps.getMsg('unloadWarning');  // Webkit.
+              }
+              return null;
+            });
+            var blocklyDiv = document.getElementById('blockly');
+            var visualization = document.getElementById('visualization');
+            var onresize = function(e) {
+              var top = visualization.offsetTop;
+              blocklyDiv.style.top = top + 'px';
+              blocklyDiv.style.left = rtl ? '10px' : '420px';
+              blocklyDiv.style.width = (window.innerWidth - 440) + 'px';
+              blocklyDiv.style.height =
+                  (window.innerHeight - top - 20 + window.scrollY) + 'px';
+            };
+            window.addEventListener('scroll', function() {
+                onresize();
+                Blockly.fireUiEvent(window, 'resize');
+              });
+            window.addEventListener('resize', onresize);
+            onresize();
 
-  window.addEventListener('beforeunload', function(e) {
-    if (Blockly.mainWorkspace.getAllBlocks().length > 2) {
-      e.returnValue = BlocklyApps.getMsg('unloadWarning');  // Gecko.
-      return BlocklyApps.getMsg('unloadWarning');  // Webkit.
-    }
-    return null;
-  });
-  var blocklyDiv = document.getElementById('blockly');
-  var visualization = document.getElementById('visualization');
-  var onresize = function(e) {
-    var top = visualization.offsetTop;
-    blocklyDiv.style.top = top + 'px';
-    blocklyDiv.style.left = rtl ? '10px' : '420px';
-    blocklyDiv.style.width = (window.innerWidth - 440) + 'px';
-    blocklyDiv.style.height =
-        (window.innerHeight - top - 20 + window.scrollY) + 'px';
-  };
-  window.addEventListener('scroll', function() {
-      onresize();
-      Blockly.fireUiEvent(window, 'resize');
-    });
-  window.addEventListener('resize', onresize);
-  onresize();
+            // Hide download button if browser lacks support
+            // (http://caniuse.com/#feat=download).
+            if (!(goog.userAgent.GECKO ||
+                 (goog.userAgent.WEBKIT && !goog.userAgent.SAFARI))) {
+              document.getElementById('captureButton').className = 'disabled';
+            }
 
-  // Hide download button if browser lacks support
-  // (http://caniuse.com/#feat=download).
-  if (!(goog.userAgent.GECKO ||
-       (goog.userAgent.WEBKIT && !goog.userAgent.SAFARI))) {
-    document.getElementById('captureButton').className = 'disabled';
-  }
+            // Initialize the slider.
+            var sliderSvg = document.getElementById('slider');
+            Turtle.speedSlider = new Slider(10, 35, 130, sliderSvg);
 
-  // Initialize the slider.
-  var sliderSvg = document.getElementById('slider');
-  Turtle.speedSlider = new Slider(10, 35, 130, sliderSvg);
+            // TODO SG
+            var defaultXml =
+                '  <block type="draw_move" x="70" y="70">' +
+                '    <value name="VALUE">' +
+                '      <block type="math_number">' +
+                '        <title name="NUM">100</title>' +
+                '      </block>' +
+                '    </value>' +
+                '  </block>';
+            // var defaultXml =
+            //     '<xml>' +
+            //     '  <block type="draw_move" x="70" y="70">' +
+            //     '    <value name="VALUE">' +
+            //     '      <block type="math_number">' +
+            //     '        <title name="NUM">100</title>' +
+            //     '      </block>' +
+            //     '    </value>' +
+            //     '  </block>' +
+            //     '</xml>';
+            BlocklyApps.loadBlocks(defaultXml);
 
-  var defaultXml =
-      '<xml>' +
-      '  <block type="draw_move" x="70" y="70">' +
-      '    <value name="VALUE">' +
-      '      <block type="math_number">' +
-      '        <title name="NUM">100</title>' +
-      '      </block>' +
-      '    </value>' +
-      '  </block>' +
-      '</xml>';
-  BlocklyApps.loadBlocks(defaultXml);
+            Turtle.ctxDisplay = document.getElementById('display').getContext('2d');
+            Turtle.ctxScratch = document.getElementById('scratch').getContext('2d');
+            Turtle.reset();
+       });
 
-  Turtle.ctxDisplay = document.getElementById('display').getContext('2d');
-  Turtle.ctxScratch = document.getElementById('scratch').getContext('2d');
-  Turtle.reset();
+  
 };
 
 window.addEventListener('load', Turtle.init);

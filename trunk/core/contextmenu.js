@@ -188,7 +188,7 @@ Blockly.ContextMenu.optionToDom = function(text) {
       {'class': 'blocklyMenuText',
       'x': Blockly.ContextMenu.X_PADDING,
       'y': 15}, gElement);
-  var textNode = document.createTextNode(text);
+  var textNode = document.createTextNode(text, true);
   textElement.appendChild(textNode);
   return gElement;
 };

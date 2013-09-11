@@ -49,7 +49,7 @@ Blockly.FieldDropdown = function(menuGenerator, opt_changeHandler) {
   // Add dropdown arrow: "option ▾" (LTR) or "▾ אופציה" (RTL)
   this.arrow_ = Blockly.createSvgElement('tspan', {}, null);
   this.arrow_.appendChild(document.createTextNode(
-      Blockly.RTL ? '\u25BE ' : ' \u25BE'));
+      Blockly.RTL ? '\u25BE ' : ' \u25BE', true));
 
   // Call parent's constructor.
   Blockly.FieldDropdown.superClass_.constructor.call(this, firstTuple[0]);
@@ -162,7 +162,7 @@ Blockly.FieldDropdown.prototype.showEditor_ = function() {
       // Insert the checkmark between the rect and text, thus preserving the
       // ability to reference them as firstChild and lastChild respectively.
       gElement.insertBefore(checkElement, textElement);
-      checkElement.appendChild(document.createTextNode('\u2713'));
+      checkElement.appendChild(document.createTextNode('\u2713'), true);
     }
 
     gElement.setAttribute('transform',
@@ -325,7 +325,7 @@ Blockly.FieldDropdown.prototype.setText = function(text) {
     // Prevent the field from disappearing if empty.
     text = Blockly.Field.NBSP;
   }
-  var textNode = document.createTextNode(text);
+  var textNode = document.createTextNode(text, true);
   this.textElement_.appendChild(textNode);
 
   // Insert dropdown arrow.

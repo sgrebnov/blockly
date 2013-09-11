@@ -46,8 +46,8 @@ BlocklyApps.LANGUAGES = {
   nl: ['Nederlands', 'ltr', 'en_compressed.js'],
   pl: ['Polski', 'ltr', 'en_compressed.js'],
   pt: ['Português', 'ltr', 'pt_br_compressed.js'],
-  ru: ['Русский', 'ltr', 'en_compressed.js'],
-  sr: ['Српски', 'ltr', 'en_compressed.js'],
+  ru: ['Ру�?�?кий', 'ltr', 'en_compressed.js'],
+  sr: ['Срп�?ки', 'ltr', 'en_compressed.js'],
   sw: ['Kishwahili', 'ltr', 'en_compressed.js'],
   th: ['ภาษาไทย', 'ltr', 'en_compressed.js'],
   tr: ['Türkçe', 'ltr', 'en_compressed.js'],
@@ -477,52 +477,57 @@ Maze.init = function() {
        maxBlocks: maxBlocks,
        rtl: rtl,
        toolbox: toolbox,
-       trashcan: true});
-  Blockly.loadAudio_(['apps/maze/win.mp3', 'apps/maze/win.ogg'], 'win');
-  Blockly.loadAudio_(['apps/maze/whack.mp3', 'apps/maze/whack.ogg'], 'whack');
-  if (Maze.LEVEL == 1) {  // Make connecting blocks easier for beginners.
-    Blockly.SNAP_RADIUS *= 2;
-  }
+       trashcan: true}, 
+       function(){
+          Blockly.loadAudio_(['apps/maze/win.mp3', 'apps/maze/win.ogg'], 'win');
+          Blockly.loadAudio_(['apps/maze/whack.mp3', 'apps/maze/whack.ogg'], 'whack');
+          if (Maze.LEVEL == 1) {  // Make connecting blocks easier for beginners.
+            Blockly.SNAP_RADIUS *= 2;
+          }
 
-  Blockly.JavaScript.INFINITE_LOOP_TRAP = '  BlocklyApps.checkTimeout(%1);\n';
-  Maze.drawMap();
+          Blockly.JavaScript.INFINITE_LOOP_TRAP = '  BlocklyApps.checkTimeout(%1);\n';
+          Maze.drawMap();
 
-  var blocklyDiv = document.getElementById('blockly');
-  var visualization = document.getElementById('visualization');
-  var onresize = function(e) {
-    var top = visualization.offsetTop;
-    blocklyDiv.style.top = top + 'px';
-    blocklyDiv.style.left = rtl ? '10px' : '420px';
-    blocklyDiv.style.width = (window.innerWidth - 440) + 'px';
-    blocklyDiv.style.height =
-        (window.innerHeight - top - 20 + window.scrollY) + 'px';
-  };
-  window.addEventListener('scroll', function() {
-      onresize();
-      Blockly.fireUiEvent(window, 'resize');
-    });
-  window.addEventListener('resize', onresize);
-  onresize();
+          var blocklyDiv = document.getElementById('blockly');
+          var visualization = document.getElementById('visualization');
+          var onresize = function(e) {
+            var top = visualization.offsetTop;
+            blocklyDiv.style.top = top + 'px';
+            blocklyDiv.style.left = rtl ? '10px' : '420px';
+            blocklyDiv.style.width = (window.innerWidth - 440) + 'px';
+            blocklyDiv.style.height =
+                (window.innerHeight - top - 20 + window.scrollY) + 'px';
+          };
+          window.addEventListener('scroll', function() {
+              onresize();
+              Blockly.fireUiEvent(window, 'resize');
+            });
+          window.addEventListener('resize', onresize);
+          onresize();
+          // TODO SG
+          var defaultXml = '<block type="maze_moveForward" x="70" y="70"></block>';
+              // '<xml>' +
+              // '  <block type="maze_moveForward" x="70" y="70"></block>' +
+              // '</xml>';
+          BlocklyApps.loadBlocks(defaultXml);
 
-  var defaultXml =
-      '<xml>' +
-      '  <block type="maze_moveForward" x="70" y="70"></block>' +
-      '</xml>';
-  BlocklyApps.loadBlocks(defaultXml);
+          // Locate the start and finish squares.
+          for (var y = 0; y < Maze.ROWS; y++) {
+            for (var x = 0; x < Maze.COLS; x++) {
+              if (Maze.map[y][x] == Maze.SquareType.START) {
+                Maze.start_ = {x: x, y: y};
+              } else if (Maze.map[y][x] == Maze.SquareType.FINISH) {
+                Maze.finish_ = {x: x, y: y};
+              }
+            }
+          }
 
-  // Locate the start and finish squares.
-  for (var y = 0; y < Maze.ROWS; y++) {
-    for (var x = 0; x < Maze.COLS; x++) {
-      if (Maze.map[y][x] == Maze.SquareType.START) {
-        Maze.start_ = {x: x, y: y};
-      } else if (Maze.map[y][x] == Maze.SquareType.FINISH) {
-        Maze.finish_ = {x: x, y: y};
-      }
-    }
-  }
+          Maze.reset(true);
+          Blockly.addChangeListener(function() {BlocklyApps.updateCapacity()});
 
-  Maze.reset(true);
-  Blockly.addChangeListener(function() {BlocklyApps.updateCapacity()});
+       });
+
+  
 };
 
 window.addEventListener('load', Maze.init);

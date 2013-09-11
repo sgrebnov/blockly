@@ -48,7 +48,7 @@ Blockly.Field = function(text) {
        'y': -12,
        'height': 16}, this.group_);
   this.textElement_ = Blockly.createSvgElement('text',
-      {'class': 'blocklyText'}, this.group_);
+      {'class': 'blocklyText', 'fill':'#fff'}, this.group_);
   this.size_ = {height: 25, width: 0};
   this.setText(text);
 };
@@ -125,7 +125,18 @@ Blockly.Field.prototype.getRootElement = function() {
  * @private
  */
 Blockly.Field.prototype.render_ = function() {
-  var width = this.textElement_.getComputedTextLength();
+
+  if (!this.textElement_.getComputedTextLength) {
+    var me = this;
+    this.textElement_.getComputedTextLength = function() {
+      //var width = el.getBBox().width;
+
+      return me.text_.length * 10;
+    }
+  }
+    
+  var width  = this.textElement_.getComputedTextLength();
+  
   if (this.borderRect_) {
     this.borderRect_.setAttribute('width',
         width + Blockly.BlockSvg.SEP_SPACE_X);
@@ -170,7 +181,7 @@ Blockly.Field.prototype.setText = function(text) {
     // Prevent the field from disappearing if empty.
     text = Blockly.Field.NBSP;
   }
-  var textNode = document.createTextNode(text);
+  var textNode = document.createTextNode(text, true);
   this.textElement_.appendChild(textNode);
 
   // Cached width is obsolete.  Clear it.

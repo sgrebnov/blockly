@@ -102,7 +102,7 @@ Blockly.Comment.prototype.createIcon_ = function() {
       {'class': 'blocklyIconMark',
        'x': Blockly.Comment.ICON_RADIUS,
        'y': 2 * Blockly.Comment.ICON_RADIUS - 3}, this.iconGroup_);
-  this.iconMark_.appendChild(document.createTextNode('?'));
+  this.iconMark_.appendChild(document.createTextNode('?'), true);
   this.block_.getSvgRoot().appendChild(this.iconGroup_);
   if (this.block_.editable && !this.block_.isInFlyout) {
     Blockly.bindEvent_(this.iconGroup_, 'mouseup', this, this.iconClick_);

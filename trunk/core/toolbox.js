@@ -175,7 +175,9 @@ Blockly.Toolbox.populate_ = function() {
       }
     }
   }
-  syncTrees(Blockly.languageTree, Blockly.Toolbox.tree_);
+  // TODO SG
+  //syncTrees(Blockly.languageTree, Blockly.Toolbox.tree_);
+  syncTrees(Blockly.languageTree.childNodes[0], Blockly.Toolbox.tree_);
 
   if (rootOut.blocks.length) {
     throw 'Toolbox cannot have both blocks and categories in the root level.';

@@ -34,7 +34,7 @@ goog.require('goog.dom');
  * @param {!Element} container Containing element.
  * @param {Object} opt_options Optional dictionary of options.
  */
-Blockly.inject = function(container, opt_options) {
+Blockly.inject = function(container, opt_options, callback) {
   // Verify that the container is in document.
   if (!goog.dom.contains(document, container)) {
     throw 'Error: container is not in current document.';
@@ -43,8 +43,31 @@ Blockly.inject = function(container, opt_options) {
     // TODO(scr): don't mix this in to global variables.
     goog.mixin(Blockly, Blockly.parseOptions_(opt_options));
   }
-  Blockly.createDom_(container);
-  Blockly.init_();
+
+   
+  if (!window.svgweb) { // browser SVG rendering engine
+    Blockly.createDom_(container);
+    Blockly.init_();
+    callback();
+
+  }else { // flash SVG fallback
+    // xmlns parameters are invalid here
+    var svg = Blockly.createSvgElement('svg', {
+      // 'width': 200,
+      // 'height': 200,
+      'class': 'blocklySvg'
+    }, null);
+
+    // in case of flash fallback we should wait for svg to be fully loaded
+    svg.addEventListener('SVGLoad', function() {
+      // 'this' refers to your SVG root
+      Blockly.createDom_(container, this);
+      Blockly.init_();
+      callback();
+    }, false);
+
+    svgweb.appendChild(svg, container);    
+  }  
 };
 
 /**
@@ -115,7 +138,7 @@ Blockly.parseOptions_ = function(options) {
  * @param {!Element} container Containing element.
  * @private
  */
-Blockly.createDom_ = function(container) {
+Blockly.createDom_ = function(container, svgInstance) {
   // Sadly browsers (Chrome vs Firefox) are currently inconsistent in laying
   // out content in RTL mode.  Therefore Blockly forces the use of LTR,
   // then manually positions content in RTL as needed.
@@ -137,13 +160,20 @@ Blockly.createDom_ = function(container) {
     ...
   </svg>
   */
-  var svg = Blockly.createSvgElement('svg', {
-    'xmlns': 'http://www.w3.org/2000/svg',
-    'xmlns:html': 'http://www.w3.org/1999/xhtml',
-    'xmlns:xlink': 'http://www.w3.org/1999/xlink',
-    'version': '1.1',
-    'class': 'blocklySvg'
-  }, null);
+
+  var svg;
+  if (svgInstance != null) {
+    svg  = svgInstance;    
+  } else {    
+    svg = Blockly.createSvgElement('svg', {
+      'xmlns': 'http://www.w3.org/2000/svg',
+      'xmlns:html': 'http://www.w3.org/1999/xhtml',
+      'xmlns:xlink': 'http://www.w3.org/1999/xlink',
+      'version': '1.1',
+      'class': 'blocklySvg'
+    }, null);
+  }    
+    
   /*
   <defs>
     ... filters go here ...
@@ -286,7 +316,9 @@ Blockly.createDom_ = function(container) {
   }
 
   // The SVG is now fully assembled.  Add it to the container.
-  container.appendChild(svg);
+  if (!window.svgweb) { // in case of svgweb it must be already in DOM    
+    container.appendChild(svg);
+  }
   Blockly.svg = svg;
   Blockly.svgResize();
 
@@ -351,7 +383,9 @@ Blockly.init_ = function() {
       // Build a fixed flyout with the root blocks.
       Blockly.mainWorkspace.flyout_.init(Blockly.mainWorkspace,
           Blockly.getMainWorkspaceMetrics, true);
-      Blockly.mainWorkspace.flyout_.show(Blockly.languageTree.childNodes);
+      // TODO SG investigate
+      //Blockly.mainWorkspace.flyout_.show(Blockly.languageTree.childNodes);
+      Blockly.mainWorkspace.flyout_.show(Blockly.languageTree.childNodes[0].childNodes);
       // Translate the workspace sideways to avoid the fixed flyout.
       Blockly.mainWorkspace.scrollX = Blockly.mainWorkspace.flyout_.width_;
       var translation = 'translate(' + Blockly.mainWorkspace.scrollX + ', 0)';

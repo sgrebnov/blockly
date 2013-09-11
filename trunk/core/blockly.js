@@ -261,6 +261,11 @@ Blockly.svgResize = function() {
  * @private
  */
 Blockly.onMouseDown_ = function(e) {
+
+  if (window.svgweb != null) {
+    return; // TODO SG
+  } 
+
   Blockly.Block.terminateDrag_(); // In case mouse-up event was lost.
   Blockly.hideChaff();
   var isTargetSvg = e.target && e.target.nodeName &&
@@ -571,7 +576,7 @@ Blockly.setCursorHand_ = function(closed) {
   }
   // Set cursor on the SVG surface as well as block so that rapid movements
   // don't result in cursor changing to an arrow momentarily.
-  document.getElementsByTagName('svg')[0].style.cursor = cursor;
+  //document.getElementsByTagName('svg')[0].style.cursor = cursor; TODO SG
 };
 
 /**

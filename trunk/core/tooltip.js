@@ -262,7 +262,7 @@ Blockly.Tooltip.show_ = function() {
   for (var i = 0; i < lines.length; i++) {
     var tspanElement = Blockly.createSvgElement('tspan',
         {'dy': '1em', 'x': Blockly.Tooltip.MARGINS}, Blockly.Tooltip.svgText_);
-    var textNode = document.createTextNode(lines[i]);
+    var textNode = document.createTextNode(lines[i], true);
     tspanElement.appendChild(textNode);
   }
   // Display the tooltip.

@@ -92,7 +92,7 @@ Blockly.Warning.prototype.createIcon_ = function() {
       {'class': 'blocklyIconMark',
        'x': Blockly.Warning.ICON_RADIUS,
        'y': 2 * Blockly.Warning.ICON_RADIUS - 3}, this.iconGroup_);
-  this.iconMark_.appendChild(document.createTextNode('!'));
+  this.iconMark_.appendChild(document.createTextNode('!'), true);
   this.block_.getSvgRoot().appendChild(this.iconGroup_);
   if (this.block_.editable && !this.block_.isInFlyout) {
     Blockly.bindEvent_(this.iconGroup_, 'mouseup', this, this.iconClick_);
@@ -114,7 +114,7 @@ Blockly.Warning.prototype.textToDom_ = function(text) {
   for (var i = 0; i < lines.length; i++) {
     var tspanElement = Blockly.createSvgElement('tspan',
         {'dy': '1em', 'x': Blockly.Bubble.BORDER_WIDTH}, paragraph);
-    var textNode = document.createTextNode(lines[i]);
+    var textNode = document.createTextNode(lines[i], true);
     tspanElement.appendChild(textNode);
   }
   return paragraph;

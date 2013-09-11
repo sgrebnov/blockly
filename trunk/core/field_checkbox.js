@@ -44,7 +44,7 @@ Blockly.FieldCheckbox = function(state, opt_changeHandler) {
   // Instead it uses a custom checkmark element that is either visible or not.
   this.checkElement_ = Blockly.createSvgElement('text',
       {'class': 'blocklyText', 'x': -3}, this.group_);
-  var textNode = document.createTextNode('\u2713');
+  var textNode = document.createTextNode('\u2713', true);
   this.checkElement_.appendChild(textNode);
   // Set the initial state.
   this.setValue(state);
