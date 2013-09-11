@@ -408,7 +408,7 @@ Blockly.Block.prototype.onMouseDown_ = function(e) {
     Blockly.Block.dragMode_ = 1;
     Blockly.Block.onMouseUpWrapper_ = Blockly.bindEvent_(document,
         'mouseup', this, this.onMouseUp_);
-    Blockly.Block.onMouseMoveWrapper_ = Blockly.bindEvent_(document,
+    Blockly.Block.onMouseMoveWrapper_ = Blockly.bindEvent_(Blockly.svg,
         'mousemove', this, this.onMouseMove_);
     // Build a list of comments that need to be moved and where they started.
     this.draggedBubbles_ = [];
