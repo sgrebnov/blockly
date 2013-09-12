@@ -530,7 +530,12 @@ Maze.init = function() {
   
 };
 
-window.addEventListener('load', Maze.init);
+if (window.svgweb) {  // flash SVG fallback
+	window.addEventListener('SVGLoad', Maze.init);
+}
+else {
+	window.addEventListener('load', Maze.init);
+}
 
 /**
  * Reload with a different Pegman skin.
