@@ -293,6 +293,211 @@ BlocklyApps.checkTimeout = function(opt_id) {
 };
 
 /**
+ * Is the dialog currently onscreen?
+ * @private
+ */
+BlocklyApps.isDialogVisible_ = false;
+
+/**
+ * A closing dialog should animate towards this element.
+ * @type Element
+ * @private
+ */
+BlocklyApps.dialogOrigin_ = null;
+
+/**
+ * A function to call when a dialog closes.
+ * @type Function
+ * @private
+ */
+BlocklyApps.dialogDispose_ = null;
+
+/**
+ * Show the dialog pop-up.
+ * @param {!Element} content DOM element to display in the dialog.
+ * @param {Element} origin Animate the dialog opening/closing from/to this
+ *     DOM element.  If null, don't show any animations for opening or closing.
+ * @param {boolean} animate Animate the dialog opening (if origin not null).
+ * @param {boolean} modal If true, grey out background and prevent interaction.
+ * @param {!Object} style A dictionary of style rules for the dialog.
+ * @param {Function} disposeFunc An optional function to call when the dialog
+ *     closes.  Normally used for unhooking events.
+ */
+BlocklyApps.showDialog = function(content, origin, animate, modal, style,
+                                  disposeFunc) {
+  if (BlocklyApps.isDialogVisible_) {
+    BlocklyApps.hideDialog(false);
+  }
+  BlocklyApps.isDialogVisible_ = true;
+  BlocklyApps.dialogOrigin_ = origin;
+  BlocklyApps.dialogDispose_ = disposeFunc;
+  var dialog = document.getElementById('dialog');
+  var shadow = document.getElementById('dialogShadow');
+  var border = document.getElementById('dialogBorder');
+
+  // Copy all the specified styles to the dialog.
+  for (var name in style) {
+    dialog.style[name] = style[name];
+  }
+  dialog.appendChild(content);
+  content.className = content.className.replace('dialogHiddenContent', '');
+
+  if (modal) {
+    shadow.style.visibility = 'visible';
+    shadow.style.opacity = 0.3;
+  }
+  function endResult() {
+    dialog.style.visibility = 'visible';
+    dialog.style.zIndex = 1;
+    border.style.visibility = 'hidden';
+  }
+  if (animate && origin) {
+    BlocklyApps.matchBorder_(origin, false, 0.2);
+    BlocklyApps.matchBorder_(dialog, true, 0.8);
+    // In 175ms show the dialog and hide the animated border.
+    window.setTimeout(endResult, 175);
+  } else {
+    // No animation.  Just set the final state.
+    endResult();
+  }
+};
+
+/**
+ * Hide the dialog pop-up.
+ * @param {boolean} opt_animate Animate the dialog closing.  Defaults to true.
+ *     Requires that origin was not null when dialog was opened.
+ */
+BlocklyApps.hideDialog = function(opt_animate) {
+  if (!BlocklyApps.isDialogVisible_) {
+    return;
+  }
+  BlocklyApps.isDialogVisible_ = false;
+  BlocklyApps.dialogDispose_ && BlocklyApps.dialogDispose_();
+  BlocklyApps.dialogDispose_ = null;
+  var origin = (opt_animate === false) ? null : BlocklyApps.dialogOrigin_;
+  var dialog = document.getElementById('dialog');
+  var shadow = document.getElementById('dialogShadow');
+  var border = document.getElementById('dialogBorder');
+
+  shadow.style.opacity = 0;
+
+  function endResult() {
+    shadow.style.visibility = 'hidden';
+    border.style.visibility = 'hidden';
+  }
+  if (origin) {
+    BlocklyApps.matchBorder_(dialog, false, 0.8);
+    BlocklyApps.matchBorder_(origin, true, 0.2);
+    // In 175ms hide both the shadow and the animated border.
+    window.setTimeout(endResult, 175);
+  } else {
+    // No animation.  Just set the final state.
+    endResult();
+  }
+  dialog.style.visibility = 'hidden';
+  dialog.style.zIndex = -1;
+  while (dialog.firstChild) {
+    var content = dialog.firstChild;
+    content.className += ' dialogHiddenContent';
+    document.body.appendChild(content);
+  }
+};
+
+/**
+ * Match the animated border to the a element's size and location.
+ * @param {!Element} element Element to match.
+ * @param {boolean} animate Animate to the new location.
+ * @param {number} opacity Opacity of border.
+ * @private
+ */
+BlocklyApps.matchBorder_ = function(element, animate, opacity) {
+  if (!element) {
+    return;
+  }
+  var border = document.getElementById('dialogBorder');
+  var bBox = BlocklyApps.getBBox_(element);
+  function change() {
+    border.style.width = bBox.width + 'px';
+    border.style.height = bBox.height + 'px';
+    border.style.left = bBox.x + 'px';
+    border.style.top = bBox.y + 'px';
+    border.style.opacity = opacity;
+  }
+  if (animate) {
+    border.className = 'dialogAnimate';
+    window.setTimeout(change, 1);
+  } else {
+    border.className = '';
+    change();
+  }
+  border.style.visibility = 'visible';
+};
+
+/**
+ * Compute the absolute coordinates and dimensions of an HTML or SVG element.
+ * @param {!Element} element Element to match.
+ * @return {!Object} Contains height, width, x, and y properties.
+ * @private
+ */
+BlocklyApps.getBBox_ = function(element) {
+  if (element.getBBox) {
+    // SVG element.
+    var bBox = element.getBBox();
+    var height = bBox.height;
+    var width = bBox.width;
+    var xy = Blockly.getAbsoluteXY_(element);
+    var x = xy.x;
+    var y = xy.y;
+  } else {
+    // HTML element.
+    var height = element.offsetHeight;
+    var width = element.offsetWidth;
+    var x = 0;
+    var y = 0;
+    do {
+      x += element.offsetLeft;
+      y += element.offsetTop;
+      element = element.offsetParent;
+    } while (element);
+  }
+  return {
+    height: height,
+    width: width,
+    x: x,
+    y: y
+  };
+};
+
+/**
+ * Display a storage-related modal dialog.
+ * @param {string} message Text to alert.
+ */
+BlocklyApps.storageAlert = function(message) {
+  var container = document.getElementById('containerStorage');
+  container.textContent = '';
+  var lines = message.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    var p = document.createElement('p');
+    p.appendChild(document.createTextNode(lines[i]));
+    container.appendChild(p);
+  }
+
+  var content = document.getElementById('dialogStorage');
+  var origin = document.getElementById('linkButton');
+  var style = {
+    width: '50%',
+    left: '25%',
+    top: '5em'
+  };
+  function disposeFunc() {
+    content.parentNode.removeChild(content);
+    BlocklyApps.stopDialogKeyDown();
+  }
+  BlocklyApps.showDialog(content, origin, true, true, style, disposeFunc);
+  BlocklyApps.startDialogKeyDown();
+};
+
+/**
  * Convert the user's code to raw JavaScript.
  * @param {string} code Generated code.
  * @return {string} The code without serial numbers and timeout checks.

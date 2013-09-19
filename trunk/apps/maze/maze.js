@@ -261,6 +261,22 @@ Maze.DirectionType = {
 };
 
 /**
+ * Outcomes of running the user program.
+ */
+Maze.ResultType = {
+  UNSET: 0,
+  SUCCESS: 1,
+  FAILURE: -1,
+  TIMEOUT: 2,
+  ERROR: -2
+};
+
+/**
+ * Result of last execution.
+ */
+Maze.result = Maze.ResultType.UNSET;
+
+/**
  * Starting direction.
  */
 Maze.startDirection = Maze.DirectionType.EAST;
@@ -527,7 +543,10 @@ Maze.init = function() {
 
        });
 
-  
+		window.setTimeout(function() {
+      		Blockly.addChangeListener(function() {Maze.levelHelp()});
+      		Maze.levelHelp();
+    	}, 5000);  
 };
 
 if (window.svgweb) {  // flash SVG fallback
@@ -536,6 +555,141 @@ if (window.svgweb) {  // flash SVG fallback
 else {
 	window.addEventListener('load', Maze.init);
 }
+
+/**
+ * When the workspace changes, update the help as needed.
+ */
+Maze.levelHelp = function() {
+  if (Blockly.Block.dragMode_ != 0) {
+    // Don't change helps during drags.
+    return;
+  } else if (Maze.result == Maze.ResultType.SUCCESS) {
+    // The user has already won.  They are just playing around.
+    return;
+  }
+  var userBlocks = Blockly.Xml.domToText(
+      Blockly.Xml.workspaceToDom(Blockly.mainWorkspace));
+  var toolbar = Blockly.mainWorkspace.flyout_.workspace_.getTopBlocks(true);
+  var content = null;
+  var origin = null;
+  var style = null;
+  if (Maze.LEVEL == 1) {
+    if (Blockly.mainWorkspace.getAllBlocks().length < 2) {
+      content = document.getElementById('dialogHelpStack');
+      style = {width: '370px', top: '120px'};
+      style[Blockly.RTL ? 'right' : 'left'] = '215px';
+      origin = toolbar[0].getSvgRoot();
+    } else {
+      var topBlocks = Blockly.mainWorkspace.getTopBlocks(true)
+      if (topBlocks.length > 1) {
+        var iframe = document.getElementById('iframeOneTopBlock');
+        var xml = '<block type="maze_moveForward" x="10" y="10">' +
+            '<next><block type="maze_moveForward"></block></next></block>';
+        iframe.src = 'readonly.html' +
+            '?lang=' + encodeURIComponent(BlocklyApps.LANG) +
+            '&xml=' + encodeURIComponent(xml);
+        content = document.getElementById('dialogHelpOneTopBlock');
+        style = {width: '360px', top: '120px'};
+        style[Blockly.RTL ? 'right' : 'left'] = '225px';
+        origin = topBlocks[0].getSvgRoot();
+      } else if (Maze.result == Maze.ResultType.UNSET) {
+        // Show run help dialog.
+        content = document.getElementById('dialogHelpRun');
+        style = {width: '360px', top: '410px'};
+        style[Blockly.RTL ? 'right' : 'left'] = '400px';
+        origin = document.getElementById('runButton');
+      }
+    }
+  } else if (Maze.LEVEL == 2) {
+    if (Maze.result != Maze.ResultType.UNSET &&
+        document.getElementById('runButton').style.display == 'none') {
+      content = document.getElementById('dialogHelpReset');
+      style = {width: '360px', top: '410px'};
+      style[Blockly.RTL ? 'right' : 'left'] = '400px';
+      origin = document.getElementById('resetButton');
+    }
+  } else if (Maze.LEVEL == 3) {
+    if (userBlocks.indexOf('maze_forever') == -1) {
+      if (Blockly.mainWorkspace.remainingCapacity() == 0) {
+        content = document.getElementById('dialogHelpCapacity');
+        style = {width: '430px', top: '310px'};
+        style[Blockly.RTL ? 'right' : 'left'] = '50px';
+        origin = document.getElementById('capacityBubble');
+      } else {
+        content = document.getElementById('dialogHelpRepeat');
+        style = {width: '360px', top: '320px'};
+        style[Blockly.RTL ? 'right' : 'left'] = '425px';
+        origin = toolbar[3].getSvgRoot();
+      }
+    }
+  } else if (Maze.LEVEL == 4) {
+    if (userBlocks.indexOf('maze_forever') == -1 ||
+        Blockly.mainWorkspace.getAllBlocks().length < 3 ||
+        Blockly.mainWorkspace.getTopBlocks(false).length != 1) {
+      content = document.getElementById('dialogHelpRepeatMany');
+      style = {width: '360px', top: '320px'};
+      style[Blockly.RTL ? 'right' : 'left'] = '425px';
+      origin = toolbar[3].getSvgRoot();
+    }
+  } else if (Maze.LEVEL == 6) {
+    if (userBlocks.indexOf('maze_if') == -1) {
+      content = document.getElementById('dialogHelpIf');
+      style = {width: '360px', top: '400px'};
+      style[Blockly.RTL ? 'right' : 'left'] = '425px';
+      origin = toolbar[4].getSvgRoot();
+    }
+  } else if (Maze.LEVEL == 7) {
+    if (!Maze.levelHelp.initialized7_) {
+      // Create fake dropdown.
+      var span = document.createElement('span');
+      span.className = 'helpMenuFake';
+      var options = [];
+      Blockly.Language.maze_if.DIRECTIONS.forEach(
+          function(v, x, a) {options[x] = v[0];});
+      var prefix = Blockly.commonWordPrefix(options);
+      var suffix = Blockly.commonWordSuffix(options);
+      if (suffix) {
+        var option = options[0].slice(prefix, -suffix);
+      } else {
+        var option = options[0].substring(prefix);
+      }
+      span.textContent = option + ' \u25BE';
+      // Inject fake dropdown into message.
+      var container = document.getElementById('helpMenuText');
+      var msg = container.textContent;
+      container.textContent = '';
+      var parts = msg.split(/%\d/);
+      for (var i = 0; i < parts.length; i++) {
+        container.appendChild(document.createTextNode(parts[i]));
+        if (i != parts.length - 1) {
+          container.appendChild(span.cloneNode(true));
+        }
+      }
+      Maze.levelHelp.initialized7_ = true;
+    }
+    if (userBlocks.indexOf('maze_if') == -1 ||
+        userBlocks.indexOf('isPathForward') != -1) {
+      content = document.getElementById('dialogHelpMenu');
+      style = {width: '360px', top: '400px'};
+      style[Blockly.RTL ? 'right' : 'left'] = '425px';
+      origin = toolbar[4].getSvgRoot();
+    }
+  } else if (Maze.LEVEL == 9) {
+    if (userBlocks.indexOf('maze_ifElse') == -1) {
+      content = document.getElementById('dialogHelpIfElse');
+      style = {width: '360px', top: '305px'};
+      style[Blockly.RTL ? 'right' : 'left'] = '425px';
+      origin = toolbar[5].getSvgRoot();
+    }
+  }
+  if (content) {
+    if (content.parentNode != document.getElementById('dialog')) {
+      BlocklyApps.showDialog(content, origin, true, false, style, null);
+    }
+  } else {
+    BlocklyApps.hideDialog(false);
+  }
+};
 
 /**
  * Reload with a different Pegman skin.
@@ -638,6 +792,7 @@ Maze.reset = function(first) {
  * Click the run button.  Start the program.
  */
 Maze.runButtonClick = function() {
+  BlocklyApps.hideDialog(false);
   // Only allow a single top block on levels 1 and 2.
   if (Maze.LEVEL <= 2 && Blockly.mainWorkspace.getTopBlocks().length > 1) {
     window.alert(BlocklyApps.getMsg('oneTopBlock'));
@@ -664,6 +819,7 @@ Maze.resetButtonClick = function() {
   document.getElementById('resetButton').style.display = 'none';
   Blockly.mainWorkspace.traceOn(false);
   Maze.reset(false);
+  Maze.levelHelp();
 };
 
 /**
@@ -684,7 +840,7 @@ Maze.execute = function() {
   BlocklyApps.log = [];
   BlocklyApps.ticks = 1000;
   var code = Blockly.Generator.workspaceToCode('JavaScript');
-  var result = Maze.ResultType.UNSET;
+  Maze.result = Maze.ResultType.UNSET;
 
   // Try running the user's code.  There are four possible outcomes:
   // 1. If pegman reaches the finish [SUCCESS], true is thrown.
@@ -695,25 +851,25 @@ Maze.execute = function() {
   //    no error or exception is thrown.
   try {
     eval(code);
-    result = Maze.ResultType.FAILURE;
+    Maze.result = Maze.ResultType.FAILURE;
   } catch (e) {
     // A boolean is thrown for normal termination.
     // Abnormal termination is a user error.
     if (e === Infinity) {
-      result = Maze.ResultType.TIMEOUT;
+      Maze.result = Maze.ResultType.TIMEOUT;
     } else if (e === true) {
-      result = Maze.ResultType.SUCCESS;
+      Maze.result = Maze.ResultType.SUCCESS;
     } else if (e === false) {
-      result = Maze.ResultType.ERROR;
+      Maze.result = Maze.ResultType.ERROR;
     } else {
       // Syntax error, can't happen.
-      result = Maze.ResultType.ERROR;
+      Maze.result = Maze.ResultType.ERROR;
       alert(e);
     }
   }
 
   // Fast animation if execution is successful.  Slow otherwise.
-  Maze.stepSpeed = (result == Maze.ResultType.SUCCESS) ? 100 : 150;
+  Maze.stepSpeed = (Maze.result == Maze.ResultType.SUCCESS) ? 100 : 150;
 
   // BlocklyApps.log now contains a transcript of all the user's actions.
   // Reset the maze and animate the transcript.
@@ -731,6 +887,7 @@ Maze.animate = function() {
   var action = BlocklyApps.log.shift();
   if (!action) {
     BlocklyApps.highlight(null);
+    Maze.levelHelp();
     return;
   }
   BlocklyApps.highlight(action[1]);
