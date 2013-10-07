@@ -40,6 +40,10 @@ Blockly.Css.inject = function() {
   var path = Blockly.pathToBlockly.replace(/[\\\/]$/, '');
   text = text.replace(/<<<PATH>>>/g, path);
   goog.cssom.addCssText(text);
+  
+  if (svgweb) {
+	  svgweb.updateCssStyleSheets();	  
+  }
 };
 
 /**
@@ -108,8 +112,8 @@ Blockly.Css.CONTENT = [
   '}',
   '.blocklyText {',
   '  cursor: default;',
-  '  font-family: sans-serif;',
-  '  font-size: 11pt;',
+  (window.svgweb) ? '  font-family: arial;' : '  font-family: sans-serif;',
+  (window.svgweb) ? '  font-size: 14pt;' : '  font-size: 11pt;',
   '  fill: #fff;',
   '}',
   '.blocklyNonEditableText>text {',
@@ -154,7 +158,7 @@ Blockly.Css.CONTENT = [
   '.blocklyContextMenuShadow,',
   '.blocklyDropdownMenuShadow {',
   '  fill: #bbb;',
-  '  filter: url(#blocklyShadowFilter);',
+  (window.svgweb) ? '' : '  filter: url(#blocklyShadowFilter);',  
   '}',
   '.blocklyTooltipText {',
   '  font-family: sans-serif;',

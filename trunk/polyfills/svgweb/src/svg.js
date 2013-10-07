@@ -665,6 +665,19 @@ function hitch(context, method) {
   return function() { return method.apply(context, (arguments.length) ? arguments : []); };
 }
 
+
+/**
+ * return all css classes as string
+ */
+function getAllCssClasses() {
+    var css = "";
+    for(var i = 0; i < document.styleSheets.length; i++) {
+    	css += document.styleSheets[i].cssText;
+    }
+    
+    return css;
+}
+
 /* 
   Internet Explorer's list of standard XHR PROGIDS. 
 */
@@ -737,6 +750,7 @@ function SVGWeb() {
   // wait for our page's DOM content to be available
   this._initDOMContentLoaded();
   //end('SVGWeb_constructor');
+  
 }
 
 extend(SVGWeb, {
@@ -765,6 +779,9 @@ extend(SVGWeb, {
 
   /** Used to lookup namespaces **/
   _allSVGNamespaces: [],
+  
+  /** All root nodes **/
+  allSVGSVGNodes: [],
   
   /** Adds an event listener to know when both the page, the internal SVG
       machinery, and any SVG SCRIPTS or OBJECTS are finished loading.
@@ -831,6 +848,13 @@ extend(SVGWeb, {
     } else if (this.renderer == NativeHandler) {
       return 'native';
     }
+  },
+  
+  updateCssStyleSheets: function() {
+	  var allStyles = getAllCssClasses();
+	  for(var i in this.allSVGSVGNodes) {
+		  this.allSVGSVGNodes[i].updateCssStyleSheets(allStyles);
+	  }
   },
   
   /** Appends a dynamically created SVG OBJECT or SVG root to the page.
@@ -1264,7 +1288,7 @@ extend(SVGWeb, {
       }
     }
 
-    if (libraryPath === null) {
+    if (libraryPath === null || libraryPath == '') {
         libraryPath = './';
     }
     
@@ -2099,7 +2123,7 @@ extend(SVGWeb, {
       window.detachEvent('onunload', arguments.callee);
       
       // do all the onunload work now
-      //svgweb._fireUnload();
+      svgweb._fireUnload();
     });
   },
   
@@ -2452,7 +2476,8 @@ FlashInfo.prototype = {
 				var axo;
 				try {
 					if (testVersion > 6) {
-						axo = new ActiveXObject("ShockwaveFlash.ShockwaveFlash." + testVersion);																	
+						axo = new ActiveXObject("ShockwaveFlash.ShockwaveFlash." 
+																		+ testVersion);
 					} else {
 						axo = new ActiveXObject("ShockwaveFlash.ShockwaveFlash");
 					}
@@ -3304,9 +3329,7 @@ extend(FlashHandler, {
           if (typeof listener == 'object') {
             listener.handleEvent.call(listener, evt);
           } else {
-            if (listener.call(evt.currentTarget, evt)) {
-              break;
-            };
+            listener.call(evt.currentTarget, evt);
           }
         }
     }
@@ -5990,7 +6013,7 @@ extend(_Node, {
     // Adapted from ALA article:
     // http://www.alistapart.com/articles/crossbrowserscripting
     var importedNode;
-    if (true || typeof doc.importNode == 'undefined') {
+    if (typeof doc.importNode == 'undefined') {
       // import the node for IE
       importedNode = document._importNodeFunc(doc, child._nodeXML, true);
     } else { // non-IE browsers
@@ -9103,6 +9126,11 @@ extend(_SVGSVGElement, {
     /* throws SVGException */
   },
   
+  updateCssStyleSheets: function(s) {
+	this._handler.sendToFlash('jsUpdateStyle', 
+			  [ /* cssString */ s]);
+  },
+  
   // end of SVGLocatable
   
   /** Called when the Microsoft Behavior HTC file is loaded. */
@@ -9179,6 +9207,9 @@ extend(_SVGSVGElement, {
                                 /* objectHeight */ size.pixelsHeight,
                                 /* ignoreWhiteSpace */ true,
                                 /* svgString */ this._svgString ]);
+    this.updateCssStyleSheets(getAllCssClasses());
+    svgweb.allSVGSVGNodes.push(this);
+    
     //end('jsHandleLoad');
   },
   
