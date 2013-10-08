@@ -3318,7 +3318,7 @@ extend(FlashHandler, {
                 altKey: msg.altKey,
                 ctrlKey: msg.ctrlKey,
                 shiftKey: msg.shiftKey,
-                button: 0, // flash only supports left button
+                button: parseInt(msg.button),
                 id: msg.id,
                 preventDefault: function() { this.returnValue=false; },
                 stopPropagation: function() { 
