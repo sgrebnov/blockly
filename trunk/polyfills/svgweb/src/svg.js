@@ -3344,7 +3344,7 @@ extend(FlashHandler, {
           }
         }
     }
-    if (if (msg.scriptCode != null && !this.isPropagationStoppedForEvent(evt)) {) {
+    if (msg.scriptCode != null && !this.isPropagationStoppedForEvent(evt)) {
       if (this.type == 'object') {
         var defineEvtCode = 
         'var evt = { target: document.getElementById("' + 
