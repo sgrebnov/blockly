@@ -3244,13 +3244,13 @@ extend(FlashHandler, {
   _onLog: function(msg) {
     console.log('FLASH: ' + msg.logString);
   },
-  
+
   blockedEventId: 0,
 
   isPropagationStoppedForEvent: function(evt) {
-	   return this.blockedEventId == evt.id;
+    return this.blockedEventId == evt.id;
   },
-
+  
   _onEvent: function(msg) {
     //console.log('onEvent, msg='+this.debugMsg(msg));
     if (this.isPropagationStoppedForEvent(msg)) return;
@@ -3409,7 +3409,7 @@ extend(FlashHandler, {
     // keyboard listeners 
     if (this.type == 'script') {
       for (var i = 0; i < FlashHandler._keyboardListeners.length; i++) {
-	  if (this.isPropagationStoppedForEvent(evt)) break;
+        if (this.isPropagationStoppedForEvent(evt)) break;
         var listener = FlashHandler._keyboardListeners[i];
         if (listener.__type == evt.type) {
           listener.call(evt.currentTarget, evt);
@@ -3419,7 +3419,7 @@ extend(FlashHandler, {
     // Call any svg document or element keyboard listeners.
     var listeners = this._keyboardListeners;
     for (var i = 0; i < listeners.length; i++) {
-    if (this.isPropagationStoppedForEvent(evt)) break;
+      if (this.isPropagationStoppedForEvent(evt)) break;
       var listener = listeners[i];
       if (listener.__type == evt.type) {
         listener.call(evt.currentTarget, evt);
