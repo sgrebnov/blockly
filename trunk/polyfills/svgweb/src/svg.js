@@ -750,7 +750,6 @@ function SVGWeb() {
   // wait for our page's DOM content to be available
   this._initDOMContentLoaded();
   //end('SVGWeb_constructor');
-  
 }
 
 extend(SVGWeb, {
@@ -3246,8 +3245,15 @@ extend(FlashHandler, {
     console.log('FLASH: ' + msg.logString);
   },
   
+  blockedEventId: 0,
+
+  isPropagationStoppedForEvent: function(evt) {
+	   return this.blockedEventId == evt.id;
+  },
+
   _onEvent: function(msg) {
     //console.log('onEvent, msg='+this.debugMsg(msg));
+    if (this.isPropagationStoppedForEvent(msg)) return;
     if (msg.eventType.substr(0, 5) == 'mouse' || msg.eventType == 'click') {
       this._onMouseEvent(msg);
       return;
@@ -3301,6 +3307,7 @@ extend(FlashHandler, {
     // In our case, that means getScreenCTM should return a transform
     // assuming the flash object is located at the browser origin,
     // which is what flash provides as node.transform.concatenatedMatrix.
+    var self = this;
     var evt = { target: target._getProxyNode(),
                 currentTarget: currentTarget._getProxyNode(),
                 type: msg.eventType,
@@ -3312,13 +3319,17 @@ extend(FlashHandler, {
                 ctrlKey: msg.ctrlKey,
                 shiftKey: msg.shiftKey,
                 button: 0, // flash only supports left button
+                id: msg.id,
                 preventDefault: function() { this.returnValue=false; },
-                stopPropagation: function() { /* TODO */ }
+                stopPropagation: function() { 
+                  self.blockedEventId = this.id;
+                }
               };
               
     var handlers = currentTarget._listeners[msg.eventType];
     if (handlers) {
         for (var i = 0; i < handlers.length; i++) {
+          if (this.isPropagationStoppedForEvent(evt)) break;
           var handler = handlers[i];
           var listener = handler.listener;
           // TODO: See Issue 208
@@ -3333,7 +3344,7 @@ extend(FlashHandler, {
           }
         }
     }
-    if (msg.scriptCode != null) {
+    if (msg.scriptCode != null && !this.isPropagationStoppedForEvent(evt)) {
       if (this.type == 'object') {
         var defineEvtCode = 
         'var evt = { target: document.getElementById("' + 
@@ -3376,8 +3387,11 @@ extend(FlashHandler, {
                 altKey: msg.altKey,
                 ctrlKey: msg.ctrlKey,
                 shiftKey: msg.shiftKey,
+                id: msg.id,
                 preventDefault: function() { this.returnValue=false; },
-                stopPropagation: function() { /* TODO */ }
+                stopPropagation: function() { 
+                  self.blockedEventId = this.id;
+                }
               };
 
     // Under this circumstance, the browser also passes the keystroke
@@ -3395,6 +3409,7 @@ extend(FlashHandler, {
     // keyboard listeners 
     if (this.type == 'script') {
       for (var i = 0; i < FlashHandler._keyboardListeners.length; i++) {
+	  if (this.isPropagationStoppedForEvent(evt)) break;
         var listener = FlashHandler._keyboardListeners[i];
         if (listener.__type == evt.type) {
           listener.call(evt.currentTarget, evt);
@@ -3404,6 +3419,7 @@ extend(FlashHandler, {
     // Call any svg document or element keyboard listeners.
     var listeners = this._keyboardListeners;
     for (var i = 0; i < listeners.length; i++) {
+    if (this.isPropagationStoppedForEvent(evt)) break;
       var listener = listeners[i];
       if (listener.__type == evt.type) {
         listener.call(evt.currentTarget, evt);
